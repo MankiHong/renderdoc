@@ -32,4 +32,14 @@ void PosixHookInit();
 // to the callback and librenderdoc.so will be returned to user code
 void PosixHookLibrary(const char *name, dlopenCallback cb);
 
+void PosixHookFunction(const char *name, void *hook);
+
+void PosixHookApply();
+
+struct PosixScopedSuppressHooking
+{
+  PosixScopedSuppressHooking();
+  ~PosixScopedSuppressHooking();
+};
+
 bool PosixHookDetect(const char *identifier);

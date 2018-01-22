@@ -54,14 +54,23 @@ public:
     m_GLDriver = NULL;
   }
   static void libHooked(void *realLib);
-
+  static void dummyHooked(void *realLib) {}
   bool CreateHooks(const char *libName)
   {
     if(!m_EnabledHooks)
       return false;
 
     if(libName)
+    {
+      hackHooks();
       PosixHookLibrary("libEGL.so", &libHooked);
+      PosixHookLibrary("libEGL.so.1", &dummyHooked);
+      PosixHookLibrary("libGL.so.1", &dummyHooked);
+      PosixHookLibrary("libGLESv1_CM.so", &dummyHooked);
+      PosixHookLibrary("libGLESv2.so", &dummyHooked);
+      PosixHookLibrary("libGLESv2.so.2", &dummyHooked);
+      PosixHookLibrary("libGLESv3.so", &dummyHooked);
+    }
 
     bool success = SetupHooks();
 
@@ -215,13 +224,6 @@ public:
 
   bool PopulateHooks();
 } eglhooks;
-
-void EGLHook::libHooked(void *realLib)
-{
-  libGLdlsymHandle = realLib;
-  eglhooks.CreateHooks(NULL);
-  eglhooks.GetDriver()->SetDriverType(RDCDriver::OpenGLES);
-}
 
 // everything below here needs to have C linkage
 extern "C" {
@@ -392,7 +394,11 @@ __attribute__((visibility("default"))) __eglMustCastToProperFunctionPointerType 
   if(eglhooks.real.GetProcAddress == NULL)
     eglhooks.SetupExportedFunctions();
 
-  __eglMustCastToProperFunctionPointerType realFunc = eglhooks.real.GetProcAddress(func);
+  __eglMustCastToProperFunctionPointerType realFunc = NULL;
+  {
+    PosixScopedSuppressHooking suppress;
+    realFunc = eglhooks.real.GetProcAddress(func);
+  }
 
   if(!strcmp(func, "eglCreateContext"))
     return (__eglMustCastToProperFunctionPointerType)&eglCreateContext;
@@ -416,13 +422,34 @@ __attribute__((visibility("default"))) __eglMustCastToProperFunctionPointerType 
 
 };    // extern "C"
 
+void EGLHook::libHooked(void *realLib)
+{
+  libGLdlsymHandle = realLib;
+  eglhooks.CreateHooks(NULL);
+  eglhooks.GetDriver()->SetDriverType(RDCDriver::OpenGLES);
+
+  PosixHookFunction("eglCreateContext", (void *)&eglCreateContext);
+  PosixHookFunction("eglGetDisplay", (void *)&eglGetDisplay);
+  PosixHookFunction("eglDestroyContext", (void *)&eglDestroyContext);
+  PosixHookFunction("eglMakeCurrent", (void *)&eglMakeCurrent);
+  PosixHookFunction("eglSwapBuffers", (void *)&eglSwapBuffers);
+  PosixHookFunction("eglGetProcAddress", (void *)&eglGetProcAddress);
+}
+
+void hack_unhook();
+void hack_rehook();
+
 bool EGLHook::PopulateHooks()
 {
   SetupHooks();
 
-  return SharedPopulateHooks(
-      false,    // dlsym can return GL symbols during a GLES context
-      [](const char *funcName) { return (void *)eglGetProcAddress(funcName); });
+  // dlsym can return GL symbols during a GLES context
+  return SharedPopulateHooks(false, [](const char *funcName) {
+    // on some android devices we need to hook dlsym, but eglGetProcAddress might call dlsym so we
+    // need to ensure we return the 'real' pointers
+    PosixScopedSuppressHooking suppress;
+    return (void *)eglGetProcAddress(funcName);
+  });
 }
 
 const GLHookSet &GetRealGLFunctionsEGL()

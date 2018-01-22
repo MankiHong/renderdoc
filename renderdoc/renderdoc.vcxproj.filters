@@ -650,6 +650,7 @@
     <ClCompile Include="os\posix\android\android_network.cpp">
       <Filter>OS\Posix\Android</Filter>
     </ClCompile>
+    <ClCompile Include="core\jdwp.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="os\win32\comexport.def">

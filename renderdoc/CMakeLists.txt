@@ -90,6 +90,7 @@ set(sources
     core/replay_proxy.cpp
     core/replay_proxy.h
     core/android.cpp
+    core/jdwp.cpp
     core/android.h
     core/plugins.cpp
     core/plugins.h

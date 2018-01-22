@@ -116,3 +116,20 @@ void plthook_lib(void *handle)
   plthook_replace(plthook, "dlopen", (void *)dlopen, NULL);
   plthook_close(plthook);
 }
+
+// android only hooking functions, not used on linux
+PosixScopedSuppressHooking::PosixScopedSuppressHooking()
+{
+}
+
+PosixScopedSuppressHooking::~PosixScopedSuppressHooking()
+{
+}
+
+void PosixHookApply()
+{
+}
+
+void PosixHookFunction(char const *, void *)
+{
+}
