@@ -53,6 +53,10 @@ void PosixHookApply()
 {
 }
 
+void PosixHookReapply()
+{
+}
+
 void PosixHookFunction(char const *, void *)
 {
 }

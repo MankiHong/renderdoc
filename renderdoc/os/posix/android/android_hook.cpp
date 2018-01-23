@@ -319,6 +319,11 @@ void PosixHookApply()
   dl_iterate_phdr(callback, NULL);
 }
 
+void PosixHookReapply()
+{
+  dl_iterate_phdr(callback, NULL);
+}
+
 void *intercept_dlopen(const char *filename, int flag)
 {
   std::string search = filename;

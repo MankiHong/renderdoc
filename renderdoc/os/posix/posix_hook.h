@@ -36,6 +36,9 @@ void PosixHookFunction(const char *name, void *hook);
 
 void PosixHookApply();
 
+// this is a temporary hack just for now
+void PosixHookReapply();
+
 struct PosixScopedSuppressHooking
 {
   PosixScopedSuppressHooking();

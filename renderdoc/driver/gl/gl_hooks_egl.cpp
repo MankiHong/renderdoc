@@ -245,6 +245,8 @@ __attribute__((visibility("default"))) EGLContext eglCreateContext(EGLDisplay di
                                                                    EGLContext shareContext,
                                                                    EGLint const *attribList)
 {
+  PosixHookReapply();
+
   EGLint defaultAttribList[] = {0};
 
   const EGLint *attribs = attribList ? attribList : defaultAttribList;
